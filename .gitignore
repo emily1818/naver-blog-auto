@@ -1,0 +1,19 @@
+# 개인 사진 / 업로드 데이터 (git에 올리지 않음)
+photos/
+inbox/
+upload/
+upload_web/
+upload_web_*/
+
+# 생성된 글(개인 블로그 내용, 사진 포함)
+posts/
+
+# 로그 (접속 주소·IP 등 포함)
+*.log
+
+# 자격증명/로컬 설정
+auth.local
+.env
+
+# 기타
+.DS_Store
