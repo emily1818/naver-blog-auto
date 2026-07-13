@@ -49,8 +49,8 @@ FORM = """
   <textarea name=note placeholder="가게 사실 정보. 예: 노키즈존, 주차 불가, 영업 11시~"></textarea>
   <label>✍️ 이렇게 써줘 (선택)</label>
   <textarea name=request placeholder="하고 싶은 말/요청. 예: 친구랑 간 얘기 넣어줘, 물냉면 강조해줘"></textarea>
-  <label>📸 사진 (여러 장 선택 가능)</label>
-  <input type=file name=photos accept="image/*" multiple required>
+  <label>📸 사진 · 🎥 동영상 (여러 개 선택 가능)</label>
+  <input type=file name=photos accept="image/*,video/*" multiple required>
   <button type=submit>올리기</button>
 </form>
 </div></body></html>
