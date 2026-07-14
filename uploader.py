@@ -34,6 +34,7 @@ FORM = """
   label{display:block;font-weight:700;margin:16px 0 6px;font-size:15px}
   input[type=text],textarea{width:100%;box-sizing:border-box;padding:13px;border:1.5px solid #e1e5ee;border-radius:12px;font-size:16px}
   textarea{height:70px;resize:vertical}
+  textarea.big{height:180px}
   input[type=file]{width:100%;box-sizing:border-box;padding:13px;border:1.5px dashed #b7c0d0;border-radius:12px;background:#fafbfd;font-size:14px}
   button{width:100%;margin-top:22px;padding:15px;border:0;border-radius:14px;background:#2e86de;color:#fff;font-size:17px;font-weight:800}
   .ok{background:#eafaf1;border:1px solid #cdefda;color:#1e824c;padding:16px;border-radius:14px;font-size:15px;line-height:1.6}
@@ -45,10 +46,8 @@ FORM = """
   <input type=text name=region placeholder="예: 어린이대공원" required>
   <label>🏠 가게 이름</label>
   <input type=text name=store placeholder="예: 서북면옥" required>
-  <label>📝 아는 정보 (선택)</label>
-  <textarea name=note placeholder="가게 사실 정보. 예: 노키즈존, 주차 불가, 영업 11시~"></textarea>
   <label>✍️ 이렇게 써줘 (선택)</label>
-  <textarea name=request placeholder="하고 싶은 말/요청. 예: 친구랑 간 얘기 넣어줘, 물냉면 강조해줘"></textarea>
+  <textarea name=request class=big placeholder="하고 싶은 말/요청/아는 정보 다 적어주세요.&#10;예)&#10;· 친구랑 간 얘기 넣어줘&#10;· 물냉면 강조해줘&#10;· 노키즈존, 주차 불가, 영업 11시~"></textarea>
   <label>📸 사진 · 🎥 동영상 (여러 개 선택 가능)</label>
   <input type=file name=photos accept="image/*,video/*" multiple required>
   <button type=submit>올리기</button>
@@ -81,7 +80,6 @@ def index():
 def upload():
     region = request.form.get("region", "").strip()
     store = request.form.get("store", "").strip()
-    note = request.form.get("note", "").strip()
     req = request.form.get("request", "").strip()
     photos = request.files.getlist("photos")
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -95,7 +93,7 @@ def upload():
         f.save(os.path.join(folder, f"{i:02d}{ext}"))
         n += 1
     with open(os.path.join(folder, "meta.txt"), "w", encoding="utf-8") as m:
-        m.write(f"지역: {region}\n가게: {store}\n정보: {note}\n요청: {req}\n업로드시각: {stamp}\n사진수: {n}\n")
+        m.write(f"지역: {region}\n가게: {store}\n요청: {req}\n업로드시각: {stamp}\n사진수: {n}\n")
     print(f"[업로드됨] {folder}  (사진 {n}장)")
     return OK_PAGE.format(n=n, region=region, store=store)
 
