@@ -37,13 +37,16 @@ FORM = """
   textarea{height:70px;resize:vertical}
   textarea.big{height:150px}
   input[type=file]{width:100%;box-sizing:border-box;padding:13px;border:1.5px dashed #d8ba8f;border-radius:12px;background:#fdfaf4;font-size:14px}
-  .seg{display:flex;gap:8px;margin-top:4px}
-  .seg label{flex:1;margin:0;text-align:center;padding:13px 6px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;color:var(--sub);cursor:pointer;transition:.15s}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:4px}
+  .seg.row2{grid-template-columns:repeat(3,1fr);margin-top:7px}
+  .seg label{margin:0;text-align:center;padding:11px 4px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;color:var(--sub);cursor:pointer;transition:.15s}
   .seg input{display:none}
   .seg input:checked+span{color:#fff}
   .seg label:has(input:checked){background:var(--main);border-color:var(--main);color:#fff}
-  .seg label span{display:block;font-size:15px}
-  .seg label small{display:block;font-weight:500;font-size:11px;opacity:.8;margin-top:2px}
+  .seg label span{display:block;font-size:13.5px}
+  .seg label small{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:2px}
+  .hide{display:none}
+  input[type=number]{width:100%;box-sizing:border-box;padding:13px;border:1.5px solid var(--line);border-radius:12px;font-size:16px}
   .hint{font-size:12.5px;color:var(--sub);margin:6px 2px 0;line-height:1.5}
   button{width:100%;margin-top:24px;padding:15px;border:0;border-radius:14px;background:var(--main);color:#fff;font-size:17px;font-weight:800}
 </style></head><body><div class=card>
@@ -52,21 +55,32 @@ FORM = """
 <form method=post action=/upload enctype=multipart/form-data>
 
   <label>🧳 여행 (나라/도시)</label>
-  <input type=text name=trip placeholder="예: 모로코, 홍콩, 크루즈" required>
+  <input type=text name=trip placeholder="예: 홍콩, 모로코, 크루즈" required>
 
   <label>🗂 글 종류</label>
   <div class=seg>
-    <label><input type=radio name=kind value="맛집" checked><span>🍽 맛집<small>식당·카페</small></span></label>
-    <label><input type=radio name=kind value="관광지"><span>📸 관광지<small>명소·볼거리</small></span></label>
-    <label><input type=radio name=kind value="여행정보"><span>📝 여행정보<small>준비물·일정</small></span></label>
+    <label><input type=radio name=kind value="계획준비"><span>📋 계획+준비<small>1번</small></span></label>
+    <label><input type=radio name=kind value="일정"><span>🗓 일정<small>2번</small></span></label>
+    <label><input type=radio name=kind value="비행기"><span>✈️ 비행기<small>3번</small></span></label>
+    <label><input type=radio name=kind value="숙소"><span>🏨 숙소<small>4번</small></span></label>
+  </div>
+  <div class="seg row2">
+    <label><input type=radio name=kind value="N일차"><span>📅 N일차<small>5번</small></span></label>
+    <label><input type=radio name=kind value="맛집" checked><span>🍽 맛집<small>가게별</small></span></label>
+    <label><input type=radio name=kind value="관광지"><span>📸 관광지<small>명소별</small></span></label>
   </div>
   <p class=hint id=kindHint>🍽 구글 지도 + 리뷰로 정보 찾아서 맛집 글로 써드려요.</p>
 
+  <div id=dayBox class=hide>
+    <label>📅 몇 일차?</label>
+    <input type=number name=day min=1 max=60 placeholder="예: 3">
+  </div>
+
   <label>📍 지역/도시 <span style="font-weight:400;color:#8a93a3">(선택)</span></label>
-  <input type=text name=region placeholder="예: 마라케시, 셰프샤우엔">
+  <input type=text name=region placeholder="예: 침사추이, 센트럴">
 
   <label id=placeLbl>🏛 장소 이름 <span style="font-weight:400;color:#8a93a3">(선택)</span></label>
-  <input type=text name=place placeholder="예: 자마엘프나 광장 / 리야드OO">
+  <input type=text name=place id=placeInp placeholder="예: 팀호완 / 페닌슐라 호텔">
 
   <label>✍️ 이렇게 써줘 (선택)</label>
   <textarea name=request class=big placeholder="하고 싶은 말/요청/아는 정보 다 적어주세요.&#10;예)&#10;· 노을이 진짜 예뻤어&#10;· 입장료·가는 법 넣어줘&#10;· 노션 일정이랑 연동해서 써줘"></textarea>
@@ -79,13 +93,35 @@ FORM = """
 </div>
 <script>
   var hints={
+    "계획준비":"📋 준비물·비자·환전·날씨·동선 짜는 순서로 써드려요. 노션 링크 주면 참고해요. (사진 없어도 OK)",
+    "일정":"🗓 일차별 일정표를 간단하게 정리해드려요. 자세한 건 N일차 글로 빠져요. (사진 없어도 OK)",
+    "비행기":"✈️ 항공사·가격·좌석·시간대 팁으로 항공권 글을 써드려요.",
+    "숙소":"🏨 숙소 1곳당 글 1개로 써드려요. 호텔 이름이 검색 키워드라 합치지 않아요.",
+    "N일차":"📅 그날 사진 + 경험 위주 후기로 써드려요. 제목은 대표 장소를 앞에 둬요. 사진 많이 올려주세요!",
     "맛집":"🍽 구글 지도 + 리뷰로 정보 찾아서 맛집 글로 써드려요.",
-    "관광지":"📸 구글 지도 + 리뷰로 명소 정보(입장료·가는 법 등) 찾아서 써드려요.",
-    "여행정보":"📝 노션의 준비물·일정을 자동으로 가져와서 정리해드려요. (사진 없어도 OK)"
+    "관광지":"📸 구글 지도 + 리뷰로 명소 정보(입장료·가는 법 등) 찾아서 써드려요."
+  };
+  var placeLbls={
+    "계획준비":"🔗 노션 링크 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>",
+    "일정":"🔗 노션 링크 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>",
+    "비행기":"✈️ 항공사 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>",
+    "숙소":"🏨 숙소 이름",
+    "N일차":"🏛 그날 대표 장소 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>",
+    "맛집":"🍽 가게 이름 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>",
+    "관광지":"🏛 명소 이름 <span style=\\"font-weight:400;color:#8a93a3\\">(선택)</span>"
+  };
+  var placeHolders={
+    "계획준비":"노션 페이지 URL 붙여넣기", "일정":"노션 페이지 URL 붙여넣기",
+    "비행기":"예: 캐세이패시픽", "숙소":"예: 페닌슐라 홍콩",
+    "N일차":"예: 침사추이 야경", "맛집":"예: 팀호완", "관광지":"예: 빅토리아 피크"
   };
   document.querySelectorAll('.seg input').forEach(function(r){
     r.addEventListener('change',function(){
-      document.getElementById('kindHint').textContent=hints[this.value];
+      var k=this.value;
+      document.getElementById('kindHint').textContent=hints[k];
+      document.getElementById('placeLbl').innerHTML=placeLbls[k];
+      document.getElementById('placeInp').placeholder=placeHolders[k];
+      document.getElementById('dayBox').className = (k==='N일차') ? '' : 'hide';
     });
   });
 </script>
@@ -119,10 +155,12 @@ def upload():
     kind   = request.form.get("kind", "맛집").strip()
     region = request.form.get("region", "").strip()
     place  = request.form.get("place", "").strip()
+    day    = request.form.get("day", "").strip()
     req    = request.form.get("request", "").strip()
     photos = request.files.getlist("photos")
     stamp  = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    name_bits = [safe(trip), kind, safe(place or region or "여행")]
+    kind_bit = f"{day}일차" if kind == "N일차" and day else kind
+    name_bits = [safe(trip), kind_bit, safe(place or region or "여행")]
     folder = os.path.join(INBOX, f"{stamp}_여행_" + "_".join(name_bits))
     os.makedirs(folder, exist_ok=True)
     n = 0
@@ -137,7 +175,8 @@ def upload():
             f"분류: 여행\n"
             f"여행: {trip}\n"
             f"종류: {kind}\n"
-            f"지역: {region}\n"
+            + (f"일차: {day}\n" if kind == "N일차" and day else "")
+            + f"지역: {region}\n"
             f"장소: {place}\n"
             f"요청: {req}\n"
             f"업로드시각: {stamp}\n"
