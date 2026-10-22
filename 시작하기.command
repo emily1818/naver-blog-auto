@@ -9,23 +9,14 @@ echo ""
 echo "🐾 블로그 업로더를 켤게요"
 echo "=================================="
 
-# ---------- 1. 필요한 것 확인 ----------
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "❌ python3 이 없어요."
-  echo "   터미널에 이걸 붙여넣어 설치해주세요:"
-  echo "   xcode-select --install"
-  echo ""
-  read -r -p "엔터를 누르면 닫혀요..." _
-  exit 1
-fi
+# ---------- 1. 필요한 것 확인 (없으면 install.sh 로 자동 설치) ----------
+for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  [ -x "$b" ] && { eval "$("$b" shellenv)"; break; }
+done
 
-if ! command -v cloudflared >/dev/null 2>&1; then
-  echo "❌ cloudflared 가 없어요. (폰에서 접속하려면 필요해요)"
-  echo "   터미널에 이걸 붙여넣어 설치해주세요:"
-  echo "   brew install cloudflared"
-  echo ""
-  read -r -p "엔터를 누르면 닫혀요..." _
-  exit 1
+if ! xcode-select -p >/dev/null 2>&1 || ! command -v cloudflared >/dev/null 2>&1; then
+  echo "📦 필요한 프로그램이 없어서 먼저 설치할게요."
+  exec /bin/bash "$BASE/install.sh"
 fi
 
 # ---------- 2. 비밀번호 ----------

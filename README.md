@@ -7,30 +7,19 @@
 
 ## 🆕 새 맥 / 새 계정에서 처음 시작할 때
 
-### 1. 한 번만 설치하기
+### 1. 한 줄로 설치하기
 
-터미널을 열고 아래를 순서대로 붙여넣으세요.
-
-```bash
-# 개발도구 (python3 포함)
-xcode-select --install
-
-# Homebrew (이미 있으면 건너뛰어도 돼요)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# 폰에서 접속할 때 쓰는 터널
-brew install cloudflared
-```
-
-### 2. 코드 받기
+터미널을 열고 이 한 줄만 붙여넣으세요.
 
 ```bash
-cd ~
-git clone https://github.com/emily1818/naver-blog-auto.git
-cd naver-blog-auto
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/emily1818/naver-blog-auto/main/install.sh)"
 ```
 
-### 3. 켜기
+없는 것만 알아서 설치해요 (개발도구 → Homebrew → cloudflared),
+코드를 `~/claude/naver-blog-auto` 에 받고, 업로더까지 켜줘요.
+중간에 설치 창이 뜨면 [설치], 비밀번호를 물으면 맥 로그인 비밀번호를 넣으면 돼요.
+
+### 2. 다음부터 켜기
 
 Finder에서 `naver-blog-auto` 폴더를 열고 **`시작하기.command`** 를 더블클릭하세요.
 
@@ -43,7 +32,7 @@ Finder에서 `naver-blog-auto` 폴더를 열고 **`시작하기.command`** 를 �
 >
 > 그래도 안 되면 터미널에 한 번만:
 > ```bash
-> chmod +x ~/naver-blog-auto/*.command
+> chmod +x ~/claude/naver-blog-auto/*.command
 > ```
 
 ---
@@ -96,6 +85,7 @@ naver-blog-auto/
 ├── 시작하기.command        ← 더블클릭해서 켜기
 ├── 끄기.command            ← 더블클릭해서 끄기
 ├── 현재주소_확인.command    ← 접속 주소 다시 보기
+├── install.sh              ← 새 맥 한 줄 설치
 │
 ├── uploader.py             맛집 업로더 (포트 8765)
 ├── uploader_travel.py      여행 업로더 (포트 8766)
