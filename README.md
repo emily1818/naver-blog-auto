@@ -78,6 +78,43 @@ Claude Code를 열고 이렇게 말하면 돼요.
 
 ---
 
+## 📲 맥 없이 갤럭시 탭으로 쓰기 (Termux)
+
+맥 대신 **갤럭시 탭이 업로더 서버** 역할을 해요. 핸드폰은 예전처럼 주소로 사진을 올리면 돼요.
+
+### 1. 처음 한 번
+1. 플레이스토어 말고 **F-Droid**에서 `Termux`, `Termux:API` 두 앱을 설치하세요.
+   (플레이스토어판 Termux는 오래돼서 설치가 실패해요)
+2. Termux를 열고 이 한 줄을 붙여넣으세요.
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/emily1818/naver-blog-auto/main/termux.sh | bash -s install
+   ```
+3. 업로더 아이디/비번을 정하면 **맛집/여행 접속 주소**가 나와요. 핸드폰으로 보내서 열면 끝.
+
+### 2. 다음부터
+| 하고 싶은 것 | Termux에 입력 |
+|---|---|
+| 켜기 | `~/naver-blog-auto/termux.sh start` |
+| 주소 다시 보기 | `~/naver-blog-auto/termux.sh url` |
+| 끄기 | `~/naver-blog-auto/termux.sh stop` |
+
+### 3. 글 만들기
+탭의 Termux 안에서 Claude Code를 켜고 "새글 왔어"라고 하면 돼요.
+```bash
+pkg install -y nodejs && npm install -g @anthropic-ai/claude-code   # 처음 한 번
+cd ~/naver-blog-auto && claude
+```
+> ⚠️ 안드로이드는 Claude Code 공식 지원 기기가 아니라서 설치가 안 될 수도 있어요.
+> 그럴 땐 Claude 앱에서 사진을 직접 첨부해서 글을 받으면 돼요.
+
+### 알아둘 점
+- 화면을 꺼도 되지만 **Termux를 최근 앱에서 밀어서 닫으면 꺼져요.**
+  설정 → 배터리 → Termux를 **"제한 없음"**으로 해두면 덜 끊겨요.
+- 탭을 재부팅하면 주소가 바뀌어요 → `termux.sh start` 다시.
+- 티스토리 **자동 업로드(크롬 조작)는 탭에선 안 돼요.** `_티스토리.html`을 열어 직접 붙여넣어 주세요.
+
+---
+
 ## 📂 폴더 구조
 
 ```

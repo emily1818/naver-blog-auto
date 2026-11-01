@@ -28,5 +28,6 @@
 
 ## 업로더 주소가 "꺼졌다"고 하면
 - 보통 맥 재부팅으로 cloudflared quick tunnel 주소가 바뀐 것. 서버는 살아 있다.
-- 맛집(8765) → `tunnel.log`, 여행(8766) → `travel_tunnel.log`의 마지막 trycloudflare URL을 코드블록으로 바로 준다.
+- 맛집(8765) → `tunnel.log`, 여행(8766) → `tunnel_travel.log`의 마지막 trycloudflare URL을 코드블록으로 바로 준다.
+- 맥은 더 이상 안 쓴다(2026-11). 이제 서버는 **갤럭시 탭 Termux**(`termux.sh`). 탭 재부팅/Termux 종료로 꺼졌으면 `~/naver-blog-auto/termux.sh start`를 안내한다. 탭에선 티스토리 크롬 자동 업로드 불가 → HTML만 건넨다.
 - 영구 주소·계정 가입·자동화 세팅은 제안하지 않는다(사용자가 원치 않음).
