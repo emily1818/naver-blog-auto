@@ -1,0 +1,406 @@
+<title>둥 블로그 사진 업로더</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 폰 한 손 조작용 단일 칼럼 카드. 위에 맛집/여행 탭, 아래에 최근 업로드 목록 */
+:root{
+  --bg:#eef2f8; --card:#ffffff; --fg:#26303f; --sub:#7d8798; --line:#dde3ee;
+  --field:#f8fafd; --main:#2e86de; --main-ink:#ffffff; --trip:#16a085;
+  --ok-bg:#e9f8f0; --ok-fg:#1e7a4a; --warn-bg:#fff4e0; --warn-fg:#99620a; --bad-bg:#fdecec; --bad-fg:#b03a3a;
+  --f-display:"Jua","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151a22; --card:#1e2530; --fg:#e7ebf2; --sub:#98a2b3; --line:#323b49;
+  --field:#252d39; --main:#4c9dee; --main-ink:#0d1520; --trip:#2fc4a3;
+  --ok-bg:#183326; --ok-fg:#7fdcaa; --warn-bg:#3a2e17; --warn-fg:#f0c477; --bad-bg:#3a1f22; --bad-fg:#f2a0a0;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151a22; --card:#1e2530; --fg:#e7ebf2; --sub:#98a2b3; --line:#323b49;
+  --field:#252d39; --main:#4c9dee; --main-ink:#0d1520; --trip:#2fc4a3;
+  --ok-bg:#183326; --ok-fg:#7fdcaa; --warn-bg:#3a2e17; --warn-fg:#f0c477; --bad-bg:#3a1f22; --bad-fg:#f2a0a0;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border-radius:20px;padding:22px 20px;box-shadow:0 6px 24px rgba(20,40,80,.07)}
+h1{font-family:var(--f-display);font-weight:400;font-size:27px;margin:0;letter-spacing:.2px}
+.sub{color:var(--sub);font-size:13.5px;margin:2px 0 0}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--field);border:1.5px solid var(--line);border-radius:14px;padding:4px;margin-top:18px}
+.tabs button{border:0;background:transparent;color:var(--sub);font:inherit;font-weight:700;font-size:15.5px;padding:10px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--main);color:var(--main-ink)}
+body.trip .tabs button[aria-selected="true"]{background:var(--trip)}
+form{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+label.f{font-weight:700;font-size:15px;margin-top:12px}
+label.f small{font-weight:400;color:var(--sub)}
+input[type=text],input[type=number],textarea{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;font:inherit;font-size:16px;background:var(--field);color:var(--fg)}
+textarea{height:160px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible,.pick:focus-within{outline:2.5px solid var(--main);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seg.r3{grid-template-columns:repeat(3,1fr)}
+.seg label{display:block;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:58px;padding:6px 2px;border:1.5px solid var(--line);border-radius:12px;background:var(--field);font-size:13px;font-weight:700;text-align:center;line-height:1.25}
+.seg small{font-weight:400;color:var(--sub);font-size:11px}
+.seg input:checked+span{border-color:var(--trip);background:color-mix(in srgb,var(--trip) 14%,var(--field))}
+.seg input:focus-visible+span{outline:2.5px solid var(--trip);outline-offset:2px}
+.hint{font-size:12.5px;color:var(--sub);margin:2px 2px 0}
+.pick{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;border:1.5px dashed var(--sub);border-radius:14px;background:var(--field);color:var(--fg);font-weight:700;cursor:pointer}
+.pick input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;margin-top:6px}
+.thumbs:empty{display:none}
+.th{position:relative;aspect-ratio:1;max-width:100%;border-radius:10px;overflow:hidden;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:26px}
+.th img{width:100%;height:100%;object-fit:cover}
+.th b{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;border-radius:6px;padding:1px 5px;font-variant-numeric:tabular-nums}
+.th.bad{outline:2.5px solid var(--bad-fg)}
+.th.done::after{content:"✓";position:absolute;right:4px;bottom:4px;background:var(--ok-fg);color:var(--card);width:20px;height:20px;border-radius:50%;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.clear{align-self:flex-end;border:0;background:none;color:var(--sub);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:4px}
+.submit{margin-top:18px;padding:15px;border:0;border-radius:14px;background:var(--main);color:var(--main-ink);font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+body.trip .submit{background:var(--trip)}
+.submit:disabled{opacity:.55;cursor:default}
+.bar{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--main);transition:width .2s}
+body.trip .bar i{background:var(--trip)}
+.msg{padding:14px 16px;border-radius:14px;font-size:14.5px;line-height:1.65}
+.msg.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.msg.warn{background:var(--warn-bg);color:var(--warn-fg)}
+.msg.bad{background:var(--bad-bg);color:var(--bad-fg)}
+.again{display:block;width:100%;margin-top:12px;padding:13px;border:1.5px solid var(--line);border-radius:14px;background:var(--field);color:var(--fg);font:inherit;font-weight:700;cursor:pointer}
+h2{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 10px}
+ul.recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+ul.recent li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:11px 0;border-top:1px solid var(--line)}
+ul.recent li:first-child{border-top:0}
+.rt{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.rm{grid-column:1;color:var(--sub);font-size:12.5px;font-variant-numeric:tabular-nums}
+.chip{grid-row:1/3;grid-column:2;align-self:center;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.chip.new{background:var(--warn-bg);color:var(--warn-fg)}
+.chip.done{background:var(--ok-bg);color:var(--ok-fg)}
+.empty{color:var(--sub);font-size:14px;margin:0}
+.usage{color:var(--sub);font-size:12px;margin-top:10px;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <section class="card" id="formCard">
+    <h1 id="ttl">🐾 사진 업로더</h1>
+    <p class="sub" id="subTxt">사진이랑 정보만 올리면 Claude가 글을 만들어요</p>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabFood" aria-selected="true">🍚 맛집</button>
+      <button type="button" role="tab" id="tabTrip" aria-selected="false">✈️ 여행</button>
+    </div>
+
+    <form id="form" novalidate>
+      <!-- 맛집 -->
+      <div id="foodBox" style="display:flex;flex-direction:column;gap:6px">
+        <label class="f" for="region">📍 지역</label>
+        <input type="text" id="region" placeholder="예: 어린이대공원" autocomplete="off">
+        <label class="f" for="store">🏠 가게 이름</label>
+        <input type="text" id="store" placeholder="예: 서북면옥" autocomplete="off">
+      </div>
+
+      <!-- 여행 -->
+      <div id="tripBox" hidden style="display:flex;flex-direction:column;gap:6px">
+        <label class="f" for="trip">🧳 여행 (나라/도시)</label>
+        <input type="text" id="trip" placeholder="예: 홍콩, 모로코, 크루즈" autocomplete="off">
+        <label class="f">🗂 글 종류</label>
+        <div class="seg">
+          <label><input type="radio" name="kind" id="k1" value="계획준비"><span>📋 계획+준비<small>1번</small></span></label>
+          <label><input type="radio" name="kind" id="k2" value="일정"><span>🗓 일정<small>2번</small></span></label>
+          <label><input type="radio" name="kind" id="k3" value="비행기"><span>✈️ 비행기<small>3번</small></span></label>
+          <label><input type="radio" name="kind" id="k4" value="숙소"><span>🏨 숙소<small>4번</small></span></label>
+        </div>
+        <div class="seg r3">
+          <label><input type="radio" name="kind" id="k5" value="N일차"><span>📅 N일차<small>5번</small></span></label>
+          <label><input type="radio" name="kind" id="k6" value="맛집" checked><span>🍽 맛집<small>가게별</small></span></label>
+          <label><input type="radio" name="kind" id="k7" value="관광지"><span>📸 관광지<small>명소별</small></span></label>
+        </div>
+        <p class="hint" id="kindHint"></p>
+        <div id="dayBox" hidden style="display:flex;flex-direction:column;gap:6px">
+          <label class="f" for="day">📅 몇 일차?</label>
+          <input type="number" id="day" min="1" max="60" inputmode="numeric" placeholder="예: 3">
+        </div>
+        <label class="f" for="tregion">📍 지역/도시 <small>(선택)</small></label>
+        <input type="text" id="tregion" placeholder="예: 침사추이, 센트럴" autocomplete="off">
+        <label class="f" for="place" id="placeLbl"></label>
+        <input type="text" id="place" autocomplete="off">
+      </div>
+
+      <label class="f" for="req">✍️ 이렇게 써줘 <small>(선택)</small></label>
+      <textarea id="req"></textarea>
+
+      <label class="f" id="photoLbl">📸 사진 · 🎥 동영상 <small>(여러 개 선택 가능)</small></label>
+      <label class="pick" id="pickBox"><span id="pickTxt">＋ 사진 고르기</span>
+        <input type="file" id="files" accept="image/*,video/*" multiple aria-labelledby="photoLbl">
+      </label>
+      <div class="thumbs" id="thumbs"></div>
+      <button type="button" class="clear" id="clearBtn" hidden>사진 다시 고르기</button>
+      <p class="hint">고른 순서대로 01, 02… 번호가 붙어요. 동영상은 한 개 20MB까지예요.</p>
+
+      <button type="submit" class="submit" id="submitBtn">올리기</button>
+      <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+      <p class="hint" id="progTxt" hidden></p>
+      <div class="msg bad" id="errBox" hidden></div>
+    </form>
+  </section>
+
+  <section class="card" id="doneCard" hidden>
+    <div class="msg ok" id="doneMsg"></div>
+    <div class="msg warn" id="doneWarn" hidden style="margin-top:10px"></div>
+    <button type="button" class="again" id="againBtn">← 또 올리기</button>
+  </section>
+
+  <section class="card">
+    <h2>최근 올린 것</h2>
+    <ul class="recent" id="recent"></ul>
+    <p class="empty" id="recentEmpty">아직 올린 게 없어요. 위에서 사진을 올리면 여기 쌓이고, 글이 완성되면 ‘글 완료’로 바뀌어요.</p>
+    <p class="usage" id="usage" hidden></p>
+  </section>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var mode = "food";
+  var picked = [];          // File[]
+  var assets = null, db = null, ready = false, notReadyWhy = "";
+
+  var HINTS = {
+    "계획준비":"📋 준비물·비자·환전·날씨·동선 짜는 순서로 써드려요. 노션 링크 주면 참고해요. (사진 없어도 OK)",
+    "일정":"🗓 일차별 일정표를 간단하게 정리해드려요. 자세한 건 N일차 글로 빠져요. (사진 없어도 OK)",
+    "비행기":"✈️ 항공사·가격·좌석·시간대 팁으로 항공권 글을 써드려요.",
+    "숙소":"🏨 숙소 1곳당 글 1개로 써드려요. 호텔 이름이 검색 키워드라 합치지 않아요.",
+    "N일차":"📅 그날 사진 + 경험 위주 후기로 써드려요. 제목은 대표 장소를 앞에 둬요. 사진 많이 올려주세요!",
+    "맛집":"🍽 구글 지도 + 리뷰로 정보 찾아서 맛집 글로 써드려요.",
+    "관광지":"📸 구글 지도 + 리뷰로 명소 정보(입장료·가는 법 등) 찾아서 써드려요."
+  };
+  var PLACE_LBL = {"계획준비":["🔗 노션 링크",1],"일정":["🔗 노션 링크",1],"비행기":["✈️ 항공사",1],"숙소":["🏨 숙소 이름",0],"N일차":["🏛 그날 대표 장소",1],"맛집":["🍽 가게 이름",1],"관광지":["🏛 명소 이름",1]};
+  var PLACE_PH = {"계획준비":"노션 페이지 URL 붙여넣기","일정":"노션 페이지 URL 붙여넣기","비행기":"예: 캐세이패시픽","숙소":"예: 페닌슐라 홍콩","N일차":"예: 침사추이 야경","맛집":"예: 팀호완","관광지":"예: 빅토리아 피크"};
+  var REQ_PH = {
+    food:"하고 싶은 말/요청/아는 정보 다 적어주세요.\n예)\n· 친구랑 간 얘기 넣어줘\n· 물냉면 강조해줘\n· 노키즈존, 주차 불가, 영업 11시~",
+    trip:"하고 싶은 말/요청/아는 정보 다 적어주세요.\n예)\n· 노을이 진짜 예뻤어\n· 입장료·가는 법 넣어줘\n· 노션 일정이랑 연동해서 써줘"
+  };
+  var OK_TYPES = ["image/jpeg","image/png","image/gif","image/webp","video/mp4","video/webm"];
+  var MAX = 20*1024*1024;
+
+  function kind(){ var r=document.querySelector('input[name=kind]:checked'); return r?r.value:"맛집"; }
+  function setKind(){
+    var k=kind();
+    $("kindHint").textContent=HINTS[k];
+    var l=PLACE_LBL[k];
+    $("placeLbl").innerHTML="";
+    $("placeLbl").appendChild(document.createTextNode(l[0]+" "));
+    if(l[1]){ var s=document.createElement("small"); s.textContent="(선택)"; $("placeLbl").appendChild(s); }
+    $("place").placeholder=PLACE_PH[k];
+    $("dayBox").hidden = k!=="N일차";
+  }
+  function setMode(m){
+    mode=m;
+    document.body.classList.toggle("trip", m==="trip");
+    $("tabFood").setAttribute("aria-selected", m==="food");
+    $("tabTrip").setAttribute("aria-selected", m==="trip");
+    $("foodBox").hidden = m!=="food";
+    $("tripBox").hidden = m!=="trip";
+    $("ttl").textContent = m==="food" ? "🐾 사진 업로더" : "✈️ 여행 업로더";
+    $("subTxt").textContent = m==="food" ? "사진이랑 정보만 올리면 Claude가 글을 만들어요" : "여행·종류·사진만 올리면 Claude가 글을 만들어요";
+    $("req").placeholder = REQ_PH[m];
+    try{ localStorage.setItem("upl_mode", m); }catch(e){}
+  }
+  $("tabFood").onclick=function(){ setMode("food"); };
+  $("tabTrip").onclick=function(){ setMode("trip"); };
+  document.querySelectorAll('input[name=kind]').forEach(function(r){ r.addEventListener("change", setKind); });
+  setKind();
+  try{ if(localStorage.getItem("upl_mode")==="trip") setMode("trip"); else setMode("food"); }catch(e){ setMode("food"); }
+
+  // ---------- 사진 고르기 ----------
+  function renderThumbs(){
+    var box=$("thumbs"); box.innerHTML="";
+    picked.forEach(function(f,i){
+      var d=document.createElement("div"); d.className="th"; d.id="th"+i;
+      if(f.type.indexOf("image/")===0){
+        var im=document.createElement("img"); im.alt=""; im.src=URL.createObjectURL(f); d.appendChild(im);
+      } else { d.appendChild(document.createTextNode("🎥")); }
+      var b=document.createElement("b"); b.textContent=String(i+1).padStart(2,"0"); d.appendChild(b);
+      box.appendChild(d);
+    });
+    $("pickTxt").textContent = picked.length ? "＋ 더 고르기 ("+picked.length+"개 골랐어요)" : "＋ 사진 고르기";
+    $("clearBtn").hidden = !picked.length;
+  }
+  $("files").addEventListener("change", function(){
+    var fs=Array.prototype.slice.call(this.files||[]);
+    picked = picked.concat(fs);
+    this.value="";
+    renderThumbs();
+  });
+  $("clearBtn").onclick=function(){ picked=[]; renderThumbs(); };
+
+  // ---------- 변환 (HEIC 등 → JPEG, 20MB 넘는 사진 줄이기) ----------
+  function toJpeg(file, maxEdge){
+    return createImageBitmap(file).then(function(bmp){
+      var w=bmp.width, h=bmp.height, s=Math.min(1, maxEdge/Math.max(w,h));
+      var c=document.createElement("canvas"); c.width=Math.round(w*s); c.height=Math.round(h*s);
+      c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+      return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error("변환 실패")); },"image/jpeg",0.9); });
+    });
+  }
+  function prepare(file){
+    var t=(file.type||"").toLowerCase();
+    if(t==="image/jpg") t="image/jpeg";
+    if(OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return Promise.resolve({blob:file, type:t, ext:extOf(file.name,t)});
+    if(t.indexOf("video/")===0 || /\.(mov|mp4|webm|m4v|3gp)$/i.test(file.name)){
+      return Promise.reject(new Error(file.size>MAX ? "동영상이 20MB를 넘어요" : "이 동영상 형식은 못 올려요 (mp4만 돼요)"));
+    }
+    return toJpeg(file, file.size>MAX ? 4096 : 6000).then(function(b){
+      if(b.size>MAX) return toJpeg(file, 3000);
+      return b;
+    }).then(function(b){ return {blob:b, type:"image/jpeg", ext:".jpg"}; })
+      .catch(function(){ throw new Error("이 사진은 열 수 없어요 (JPG로 바꿔서 올려주세요)"); });
+  }
+  function extOf(name,t){
+    var m=/\.[a-z0-9]{2,5}$/i.exec(name||""); if(m) return m[0].toLowerCase();
+    return {"image/jpeg":".jpg","image/png":".png","image/gif":".gif","image/webp":".webp","video/mp4":".mp4","video/webm":".webm"}[t]||".jpg";
+  }
+  function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function uploadOne(p, tries){
+    return assets.upload(p.blob, {type:p.type}).catch(function(e){
+      var c=e&&e.code;
+      if((c==="store_unavailable"||c==="rate_limited") && tries<2) return wait(c==="rate_limited"?4000:1500).then(function(){ return uploadOne(p, tries+1); });
+      var why={too_large:"20MB를 넘어요",unsupported_type:"이 형식은 못 올려요",quota_or_state:"저장 공간이 꽉 찼어요",upstream_auth:"로그인이 풀렸어요. 새로고침 해주세요"}[c] || "올리기 실패";
+      throw new Error(why);
+    });
+  }
+
+  function stamp(d){
+    function p(n){ return String(n).padStart(2,"0"); }
+    return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+  }
+  function showErr(t){ $("errBox").textContent=t; $("errBox").hidden=!t; }
+
+  // ---------- 제출 ----------
+  $("form").addEventListener("submit", function(ev){
+    ev.preventDefault(); showErr("");
+    if(!ready){ showErr(notReadyWhy || "아직 연결 중이에요. 잠깐 뒤에 다시 눌러주세요."); return; }
+    var meta;
+    if(mode==="food"){
+      var region=$("region").value.trim(), store=$("store").value.trim();
+      if(!region||!store){ showErr("지역이랑 가게 이름을 적어주세요."); return; }
+      if(!picked.length){ showErr("사진을 한 장 이상 골라주세요."); return; }
+      meta={category:"맛집", region:region, store:store};
+    } else {
+      var trip=$("trip").value.trim(), k=kind();
+      if(!trip){ showErr("여행(나라/도시)을 적어주세요."); return; }
+      if(k==="숙소" && !$("place").value.trim()){ showErr("숙소 이름을 적어주세요."); return; }
+      meta={category:"여행", trip:trip, kind:k, day:(k==="N일차"?$("day").value.trim():""), region:$("tregion").value.trim(), place:$("place").value.trim()};
+    }
+    meta.request=$("req").value.trim();
+    run(meta);
+  });
+
+  function run(meta){
+    var btn=$("submitBtn"); btn.disabled=true; btn.textContent="올리는 중…";
+    $("bar").hidden=false; $("progTxt").hidden=false; $("barFill").style.width="0%";
+    var files=[], fails=[], total=picked.length, i=0;
+    var now=new Date();
+    function step(){
+      if(i>=total) return Promise.resolve();
+      var idx=i, f=picked[idx]; i++;
+      $("progTxt").textContent=(idx+1)+" / "+total+" 올리는 중…";
+      return prepare(f).then(function(p){
+        return uploadOne(p,0).then(function(r){
+          files.push({n:idx+1, id:r.id, type:r.contentType, ext:p.ext, size:r.sizeBytes, name:f.name});
+          var t=$("th"+idx); if(t) t.classList.add("done");
+        });
+      }).catch(function(e){
+        fails.push(String(idx+1).padStart(2,"0")+"번 ("+(f.name||"")+"): "+e.message);
+        var t=$("th"+idx); if(t) t.classList.add("bad");
+      }).then(function(){
+        $("barFill").style.width=Math.round(i/total*100)+"%";
+        return step();
+      });
+    }
+    step().then(function(){
+      if(total && !files.length) throw new Error("사진을 하나도 못 올렸어요.\n"+fails.join("\n"));
+      $("progTxt").textContent="정보 저장 중…";
+      var doc={status:"new", stamp:stamp(now), createdAt:now.toISOString(), files:files, failed:fails, photoCount:files.length};
+      for(var key in meta) doc[key]=meta[key];
+      return saveDoc(doc, 0).then(function(){ return doc; });
+    }).then(function(doc){
+      finish(doc, fails);
+    }).catch(function(e){
+      showErr(e.message||"저장하지 못했어요. 다시 눌러주세요.");
+    }).then(function(){
+      btn.disabled=false; btn.textContent="올리기"; $("bar").hidden=true; $("progTxt").hidden=true;
+    });
+  }
+  function saveDoc(doc, tries){
+    return db.collection("uploads").add(doc).catch(function(e){
+      if(e && e.code==="unavailable" && tries<1) return wait(1500).then(function(){ return saveDoc(doc, tries+1); });
+      if(e && e.code==="quota_exceeded") throw new Error("저장 공간이 꽉 찼어요. Claude에게 정리해달라고 해주세요.");
+      throw new Error("사진은 올라갔는데 정보 저장에 실패했어요. 다시 눌러주세요.");
+    });
+  }
+  function titleOf(d){
+    if(d.category==="여행"){
+      var k = d.kind==="N일차" && d.day ? d.day+"일차" : d.kind;
+      return "✈️ "+d.trip+" · "+k+(d.place?" · "+d.place:"");
+    }
+    return "🍚 "+d.region+" · "+d.store;
+  }
+  function finish(doc, fails){
+    $("formCard").hidden=true; $("doneCard").hidden=false;
+    var m=$("doneMsg"); m.innerHTML="";
+    var b=document.createElement("b"); b.textContent="✅ "+doc.photoCount+"개 업로드 완료!"; m.appendChild(b);
+    m.appendChild(document.createElement("br"));
+    m.appendChild(document.createTextNode(titleOf(doc)));
+    m.appendChild(document.createElement("br")); m.appendChild(document.createElement("br"));
+    m.appendChild(document.createTextNode("이제 Claude에게 "));
+    var q=document.createElement("b"); q.textContent=doc.category==="여행"?"“여행 글 왔어, 써줘”":"“새글 왔어, 써줘”"; m.appendChild(q);
+    m.appendChild(document.createTextNode("라고 하면 글이 만들어져요."));
+    var w=$("doneWarn");
+    if(fails.length){ w.hidden=false; w.textContent="못 올린 것 "+fails.length+"개:\n"+fails.join("\n"); w.style.whiteSpace="pre-line"; }
+    else w.hidden=true;
+    window.scrollTo(0,0);
+  }
+  $("againBtn").onclick=function(){
+    picked=[]; renderThumbs();
+    ["region","store","trip","day","tregion","place","req"].forEach(function(id){ $(id).value=""; });
+    $("doneCard").hidden=true; $("formCard").hidden=false; showErr("");
+  };
+
+  // ---------- 최근 목록 ----------
+  function renderRecent(snap){
+    var ul=$("recent"); ul.innerHTML="";
+    $("recentEmpty").hidden = !snap.empty;
+    snap.docs.forEach(function(s){
+      var d=s.data()||{};
+      var li=document.createElement("li");
+      var t=document.createElement("span"); t.className="rt"; t.textContent=titleOf(d);
+      var when=d.createdAt?new Date(d.createdAt):null;
+      var mm=document.createElement("span"); mm.className="rm";
+      mm.textContent=(when?(when.getMonth()+1)+"/"+when.getDate()+" "+String(when.getHours()).padStart(2,"0")+":"+String(when.getMinutes()).padStart(2,"0"):"")+" · 사진 "+(d.photoCount||0)+"개";
+      var c=document.createElement("span"); var done=d.status==="done";
+      c.className="chip "+(done?"done":"new"); c.textContent=done?"글 완료":"글 대기";
+      li.appendChild(t); li.appendChild(c); li.appendChild(mm); ul.appendChild(li);
+    });
+  }
+
+  // ---------- 연결 ----------
+  var timer=setTimeout(function(){ if(!ready){ notReadyWhy="연결이 안 돼요. claude.ai에 로그인한 상태로 이 페이지를 열어주세요."; showErr(notReadyWhy); } },10000);
+  if(!window.claude || !window.claude.use){ notReadyWhy="이 페이지는 claude.ai에서 열어야 사진을 올릴 수 있어요."; showErr(notReadyWhy); return; }
+  Promise.all([claude.use("assets"), claude.use("db")]).then(function(r){
+    assets=r[0]; db=r[1]; clearTimeout(timer);
+    if(!db){ notReadyWhy="claude.ai에 로그인한 상태로 열어주세요."; showErr(notReadyWhy); return; }
+    if(!assets){ notReadyWhy="사진은 이 페이지 주인 계정으로만 올릴 수 있어요. 본인 계정으로 로그인해 주세요."; showErr(notReadyWhy); }
+    else { ready=true; showErr(""); }
+    db.collection("uploads").orderBy("createdAt","desc").limit(15).onSnapshot(renderRecent, function(){});
+    if(assets && assets.list){
+      assets.list().then(function(l){
+        var u=l.usage; if(!u||!u.maxBytes) return;
+        $("usage").hidden=false;
+        $("usage").textContent="저장 공간 "+(u.bytes/1048576).toFixed(0)+"MB / "+(u.maxBytes/1048576).toFixed(0)+"MB 사용 중 · 파일 "+u.files+"개";
+      }).catch(function(){});
+    }
+  });
+})();
+</script>
