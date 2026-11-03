@@ -4,7 +4,7 @@ import sys, glob, os
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 src, out = sys.argv[1], sys.argv[2]
 os.makedirs(out, exist_ok=True)
-fs = sorted(glob.glob(os.path.join(src, "*.jpg")))
+fs = sorted([f for f in glob.glob(os.path.join(src, "*")) if f.lower().endswith((".jpg",".jpeg",".png"))])
 W, H, C = 300, 400, 4
 for s in range(0, len(fs), 12):
     sheet = Image.new("RGB", (W*C, H*3), "white")
