@@ -17,3 +17,5 @@ for w in (d.get("open_hours") or {}).get("week_from_today", {}).get("week_period
 items = ((d.get("menu") or {}).get("menus") or {}).get("items") or []
 print(f"메뉴({len(items)}):")
 for m in items: print(f"  {m.get('name')} — {m.get('price') or '가격없음'}")
+tags = re.findall(r'"(?:name|title|text)[^"]*": "([^"]{1,20})"', json.dumps(d.get("place_add_info", {}), ensure_ascii=False))
+print("편의:", ", ".join(t for t in dict.fromkeys(tags) if re.search(r"주차|반려|예약|포장|와이파이|단체|룸", t)))
