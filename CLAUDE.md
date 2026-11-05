@@ -33,7 +33,8 @@
 - "새글 왔어"면 `inbox/` 대신 여기부터 본다:
   1. `ArtifactData` list `uploads` (url 위 주소) → `status: "new"` 문서가 새 업로드.
   2. 문서마다 `inbox/<stamp>_<region>_<store>/`(여행은 `<stamp>_여행_<trip>_<종류>_<place>`) 폴더를 만들고, `files[]`의 각 `id`를 `Artifact` read(`url` + `path`=id, **한 번에 하나씩** — `paths` 묶음은 asset을 못 받음. 여러 개는 병렬 호출)로 받아 `NN<ext>`(n 순서)로 저장, `meta.txt`는 업로더와 같은 형식으로 쓴다. 이후는 기존 흐름 그대로.
-  3. 글을 건넨 뒤 그 문서를 `update`로 `status: "done"` (페이지에 '글 완료'로 뜸). 사진(asset)은 지우지 않는다.
+  3. 글을 건넨 뒤 그 문서를 `update`로 `status: "done"` (페이지에 '글 완료'로 뜸). 사진(asset)은 사용자가 지우라고 할 때만 지운다(저장 공간 1GB). 지운 업로드는 `photosDeleted: true` — 티스토리 자동 업로드 때는 폰 원본이 필요.
+   - 2026-11-05 지움: 대나무숙성회관·어구어구·아차산유황오리·레스또커피.
 - 페이지 고칠 땐 같은 파일을 같은 url로 다시 publish.
 
 ## 업로더 주소가 "꺼졌다"고 하면
