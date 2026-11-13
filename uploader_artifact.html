@@ -236,17 +236,27 @@ ul.recent li:first-child{border-top:0}
   $("clearBtn").onclick=function(){ picked=[]; renderThumbs(); };
 
   // ---------- 변환 (HEIC 등 → JPEG, 20MB 넘는 사진 줄이기) ----------
-  function toJpeg(file, maxEdge){
+  function toJpeg(file, maxEdge, q){
     return createImageBitmap(file).then(function(bmp){
       var w=bmp.width, h=bmp.height, s=Math.min(1, maxEdge/Math.max(w,h));
       var c=document.createElement("canvas"); c.width=Math.round(w*s); c.height=Math.round(h*s);
       c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
-      return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error("변환 실패")); },"image/jpeg",0.9); });
+      return new Promise(function(res,rej){ c.toBlob(function(b){ b?res(b):rej(new Error("변환 실패")); },"image/jpeg",q||0.9); });
     });
   }
   function prepare(file){
     var t=(file.type||"").toLowerCase();
     if(t==="image/jpg") t="image/jpeg";
+    // 큰 사진은 폰에서 미리 줄여서 올림(긴 변 2560px) → 업로드 3~5배 빨라짐. 실패하면 원본 그대로.
+    if(t.indexOf("image/")===0 && t!=="image/gif" && file.size>1200000){
+      return toJpeg(file, 2560, 0.85).then(function(b){
+        if(b.size>=file.size && OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return {blob:file, type:t, ext:extOf(file.name,t)};
+        return {blob:b, type:"image/jpeg", ext:".jpg"};
+      }).catch(function(){
+        if(OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return {blob:file, type:t, ext:extOf(file.name,t)};
+        throw new Error("이 사진은 열 수 없어요 (JPG로 바꿔서 올려주세요)");
+      });
+    }
     if(OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return Promise.resolve({blob:file, type:t, ext:extOf(file.name,t)});
     if(t.indexOf("video/")===0 || /\.(mov|mp4|webm|m4v|3gp)$/i.test(file.name)){
       return Promise.reject(new Error(file.size>MAX ? "동영상이 20MB를 넘어요" : "이 동영상 형식은 못 올려요 (mp4만 돼요)"));
@@ -302,10 +312,9 @@ ul.recent li:first-child{border-top:0}
     $("bar").hidden=false; $("progTxt").hidden=false; $("barFill").style.width="0%";
     var files=[], fails=[], total=picked.length, i=0;
     var now=new Date();
-    function step(){
-      if(i>=total) return Promise.resolve();
-      var idx=i, f=picked[idx]; i++;
-      $("progTxt").textContent=(idx+1)+" / "+total+" 올리는 중…";
+    var doneCount=0;
+    function one(idx){
+      var f=picked[idx];
       return prepare(f).then(function(p){
         return uploadOne(p,0).then(function(r){
           files.push({n:idx+1, id:r.id, type:r.contentType, ext:p.ext, size:r.sizeBytes, name:f.name});
@@ -315,9 +324,20 @@ ul.recent li:first-child{border-top:0}
         fails.push(String(idx+1).padStart(2,"0")+"번 ("+(f.name||"")+"): "+e.message);
         var t=$("th"+idx); if(t) t.classList.add("bad");
       }).then(function(){
-        $("barFill").style.width=Math.round(i/total*100)+"%";
-        return step();
+        doneCount++;
+        $("barFill").style.width=Math.round(doneCount/total*100)+"%";
+        $("progTxt").textContent=doneCount+" / "+total+" 올렸어요…";
       });
+    }
+    function worker(){
+      if(i>=total) return Promise.resolve();
+      var idx=i; i++;
+      return one(idx).then(worker);
+    }
+    function step(){
+      $("progTxt").textContent="0 / "+total+" 올리는 중…";
+      var ws=[]; for(var k=0;k<Math.min(3,total);k++) ws.push(worker());
+      return Promise.all(ws).then(function(){ files.sort(function(a,b){return a.n-b.n;}); });
     }
     step().then(function(){
       if(total && !files.length) throw new Error("사진을 하나도 못 올렸어요.\n"+fails.join("\n"));
