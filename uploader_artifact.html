@@ -247,8 +247,8 @@ ul.recent li:first-child{border-top:0}
   function prepare(file){
     var t=(file.type||"").toLowerCase();
     if(t==="image/jpg") t="image/jpeg";
-    // 큰 사진은 폰에서 미리 줄여서 올림(긴 변 2560px) → 업로드 3~5배 빨라짐. 실패하면 원본 그대로.
-    if(t.indexOf("image/")===0 && t!=="image/gif" && file.size>700000){
+    // 사진은 원본 화질 그대로 올림 (사용자 지시 2026-11-16: 화질 건들지 말 것). 압축 안 함.
+    if(false){
       return toJpeg(file, 2048, 0.82).then(function(b){
         if(b.size>=file.size && OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return {blob:file, type:t, ext:extOf(file.name,t)};
         return {blob:b, type:"image/jpeg", ext:".jpg"};
