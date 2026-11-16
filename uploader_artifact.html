@@ -248,8 +248,8 @@ ul.recent li:first-child{border-top:0}
     var t=(file.type||"").toLowerCase();
     if(t==="image/jpg") t="image/jpeg";
     // 큰 사진은 폰에서 미리 줄여서 올림(긴 변 2560px) → 업로드 3~5배 빨라짐. 실패하면 원본 그대로.
-    if(t.indexOf("image/")===0 && t!=="image/gif" && file.size>1200000){
-      return toJpeg(file, 2560, 0.85).then(function(b){
+    if(t.indexOf("image/")===0 && t!=="image/gif" && file.size>700000){
+      return toJpeg(file, 2048, 0.82).then(function(b){
         if(b.size>=file.size && OK_TYPES.indexOf(t)>=0 && file.size<=MAX) return {blob:file, type:t, ext:extOf(file.name,t)};
         return {blob:b, type:"image/jpeg", ext:".jpg"};
       }).catch(function(){
@@ -336,7 +336,7 @@ ul.recent li:first-child{border-top:0}
     }
     function step(){
       $("progTxt").textContent="0 / "+total+" 올리는 중…";
-      var ws=[]; for(var k=0;k<Math.min(3,total);k++) ws.push(worker());
+      var ws=[]; for(var k=0;k<Math.min(6,total);k++) ws.push(worker());
       return Promise.all(ws).then(function(){ files.sort(function(a,b){return a.n-b.n;}); });
     }
     step().then(function(){
